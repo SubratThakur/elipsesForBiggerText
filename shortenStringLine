@@ -1,0 +1,92 @@
+$(document).ready(function() {
+    shortenStringLine :function(string, options) {
+    if (!string || !options) {
+        return;
+    }
+    var width=null;
+    var e = window;
+    //For IE it return clientWidth and ClientHeight
+    //for others it returns innerWidth and innerHeight
+    if (!('innerWidth' in e)){
+        e = document.documentElement || document.body;
+        width=e['clientWidth'];
+    }
+    else{
+        width=e['innerWidth'];
+    }
+    //charLimit is calculated on the basis of size of viewport;Default limit we need to set on the basis of 1301 size viewport
+    var charLimit = parseInt(options.hash.charLimit, 10);
+    charLimit=Math.floor(width/1301*charLimit);
+    var lineLimit = parseInt(options.hash.lineLimit,10);
+    var textArray = string.split('\n');
+    //if the comment contains more than one line or the comment size is greater than charlimit
+    if(textArray.length >1 || string.length > charLimit){
+        var createdString='';
+        var index=1;
+        //iterate over number of lines
+        for (var textIndex = 0; textIndex < textArray.length; textIndex++) {
+            //create the array of word in single line
+            var words = textArray[textIndex].split(' ');
+            var tempString = '';
+            var tempLength=0;
+            //iterate over the word array
+            for(var wordIndex=0;wordIndex<words.length;wordIndex++){
+                //If Word is a URL or something else but not a real english word
+                if(words[wordIndex].length>charLimit && index<=lineLimit){
+                    //if length of next word is greater than difference of
+                    while(words[wordIndex].length>=charLimit-tempLength && index<=lineLimit) {
+                        //it may possible that the new line has some words already,so calculate remaining with respect to tempLength
+                        if(tempLength>0){
+                            tempString += words[wordIndex].substring(0, charLimit-tempLength)+'\n';
+                            words[wordIndex]=words[wordIndex].substring(charLimit-tempLength);
+                            tempLength=0;
+                        }else{
+                            tempString += words[wordIndex].substring(0, charLimit)+'\n';
+                            words[wordIndex]=words[wordIndex].substring(charLimit);
+                        }
+                        index++;
+                    }
+                    //remaining word should be added in next line if the line limit is not yet reached
+                    if(words[wordIndex].length>0 && index<=lineLimit){
+                        tempString +=words[wordIndex];
+                        tempLength=words[wordIndex].length;
+                    }
+                }
+                    //Add simple words of length less than charLimit and check for tempLength always
+                else if(words[wordIndex].length<charLimit && charLimit>tempLength+words[wordIndex].length && index<=lineLimit){
+                        tempString +=' '+words[wordIndex];
+                        tempLength=tempLength+words[wordIndex].length+1;
+                }
+                else if(charLimit<tempLength+words[wordIndex].length && index<=lineLimit){
+                    tempString=tempString.trim()+''+'\n'+words[wordIndex];
+                    index++;
+                    tempLength=words[wordIndex].length;
+                }
+                //if lineLimit reached
+                if(index>lineLimit && wordIndex<words.length){
+                    break;
+                }
+            }
+            if(index>lineLimit && textIndex<textArray.length){
+                createdString +=tempString.trim()+'...';
+                index++;
+                break;
+            }
+            else{
+                createdString +=tempString.trim()+'\n';
+                index++;
+            }
+        }
+        //check if the number of line is greater than 5 then remove last line
+        while(createdString.split('\n').length>5){
+            if(createdString.lastIndexOf("\n")>0) {
+                createdString= createdString.substring(0, createdString.lastIndexOf("\n"))+'...';
+            }
+        }
+        return createdString;
+    } else {
+        // character and line limit is not reached it's limit
+        return string;
+    }
+
+};
